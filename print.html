@@ -1,0 +1,86 @@
+<html>
+
+<script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+<script type="text/javascript" src="http://platform.linkedin.com/in.js">
+  api_key: 755l73sdqcblh2
+  onLoad: onLinkedInLoad
+  authorize: true
+
+</script>
+
+
+<p>Full Member Profile</p>
+
+
+<p>This example demonstrates the use of a login button to control what's displayed.  It also demonstrates how to use the LinkedIn auth events in a user flow.</p>
+
+<!-- NOTE: be sure to set onLoad: onLinkedInLoad -->
+<script type="text/javascript">
+
+function onLinkedInLoad() {
+  IN.Event.on(IN, "auth", function() {onLinkedInLogin();});
+  IN.Event.on(IN, "logout", function() {onLinkedInLogout();});
+}
+
+function onLinkedInLogout() {
+  setLoginBadge(false);
+}
+
+function onLinkedInLogin() {
+  var myObject = [];
+  IN.API.Profile("me")
+    .fields(["location", "skills", "positions"])
+    .result(function(result) {
+      $.each(result.values[0].positions.values, function(key,value) {
+        console.log(value);
+        myObject.push({"position": value.title});
+      });
+      $.each(result.values[0].skills.values, function(key,value) {
+        console.log(value.skill);
+        myObject.push({"skill": value.skill.name});
+      });
+
+      //console.log(result.values[0].location.name);
+      myObject.push({"location": result.values[0].location.name});
+  
+      $.post( "http://199.223.210.211:7090",
+        JSON.stringify(myObject),
+        function(data) {
+          var inp = JSON.parse(data);
+         // console.log(inp);
+          $.each(inp, function(key,val) {
+              $('#jobs').append('<li><a href='+val.url+'>'+val.name+'</li></a>');
+          } );
+        } );
+
+	$('#loading').hide();
+      setLoginBadge(result.values[0]);
+    })
+    .error(function(err) {
+      alert(err);
+    });
+}
+
+function setLoginBadge(profile) {
+  if (!profile) {
+    profHTML = "<p>You are not logged in</p>";
+  }
+  else {
+  	var profHTML = "&nbsp; Welcome";
+    profHTML = profHTML + "</a>! <a href=\"#\" onclick=\"IN.User.logout(); return false;\">logout</a></p><ul id=\"jobs\"></ul><div id=\"loading\">Loading</div>";
+  }
+  document.getElementById("loginbadge").innerHTML = profHTML;
+
+}
+  
+</script>
+
+<!-- need to be logged in to use; if not, offer a login button -->
+<script type="IN/Login"></script>
+
+<div id="loginbadge">
+  <p>Login badge renders here if the current user is authorized.</p>
+</div>
+
+
+</html>
